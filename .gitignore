@@ -1,0 +1,71 @@
+# Directorios de dependencias
+node_modules/
+packages/
+.nuget/
+
+# Archivos de entorno
+.env
+.env.local
+.env.*.local
+*.user
+*.jfm
+
+# Directorios de compilación y salida
+bin/
+obj/
+dist/
+build/
+out/
+*.dll
+*.exe
+*.pdb
+*.o
+*.so
+*.dylib
+
+# Archivos de IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.workspace
+*.suo
+*.sln.docstates
+
+# Archivos temporales y caché
+.cache/
+.temp/
+tmp/
+temp/
+*.tmp
+*.log
+*.cache
+
+# Directorios de pruebas y cobertura
+coverage/
+.nyc_output/
+junit.xml
+test-results/
+
+# Archivos de sistema
+Thumbs.db
+.LSOverride
+*.bak
+*.swp
+
+# Artefactos de construcción específicos
+.gradle/
+gradle/
+maven-wrapper.jar
+settings/
+
+# Archivos compilados de Python (si aplica)
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Directorio de reportes generados
+reports/
+*.html

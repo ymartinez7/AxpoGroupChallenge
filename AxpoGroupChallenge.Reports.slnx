@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".gitignore" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/AxpoGroupChallenge.Reports.Application/AxpoGroupChallenge.Reports.Application.csproj" />
+    <Project Path="src/AxpoGroupChallenge.Reports.Domain/AxpoGroupChallenge.Reports.Domain.csproj" />
+    <Project Path="src/AxpoGroupChallenge.Reports.Host/AxpoGroupChallenge.Reports.Host.csproj" />
+    <Project Path="src/AxpoGroupChallenge.Reports.Infrastructure/AxpoGroupChallenge.Reports.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/" />
+</Solution>
