@@ -177,14 +177,8 @@ Startup
 ### CLI
 
 ```powershell
-# Production (uses appsettings.json)
-$env:DOTNET_ENVIRONMENT = "Production"
 cd <REPO_ROOT>\AxpoGroupChallenge\src\AxpoGroupChallenge.Reports.Host\ 
-dotnet run 
 
-# Development (uses appsettings.Development.json — 2 min interval, Information log level)
-cd <REPO_ROOT>\AxpoGroupChallenge\src\AxpoGroupChallenge.Reports.Host\ 
-$env:DOTNET_ENVIRONMENT = "Development"
 dotnet run
 
 Note:
