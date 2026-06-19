@@ -170,15 +170,6 @@ Startup
    └─► ... (runs indefinitely until Ctrl+C / stop signal)
 ```
 
-If an extraction takes longer than the configured interval:
-
-```
-t= 0  [Extraction A — started]
-t=10  [Tick: A still running → extraction B skipped — WARNING logged]
-t=12  [Extraction A — finished]
-t=20  [Tick: Extraction C — started normally]
-```
-
 ---
 
 ## 6. Running
@@ -187,18 +178,17 @@ t=20  [Tick: Extraction C — started normally]
 
 ```powershell
 # Production (uses appsettings.json)
-dotnet run --project src/AxpoGroupChallenge.Reports.Host
+$env:DOTNET_ENVIRONMENT = "Production"
+cd <REPO_ROOT>\AxpoGroupChallenge\src\AxpoGroupChallenge.Reports.Host\ 
+dotnet run 
 
-# Development (uses appsettings.Development.json — 5 min interval, Information log level)
+# Development (uses appsettings.Development.json — 2 min interval, Information log level)
+cd <REPO_ROOT>\AxpoGroupChallenge\src\AxpoGroupChallenge.Reports.Host\ 
 $env:DOTNET_ENVIRONMENT = "Development"
-dotnet run --project src/AxpoGroupChallenge.Reports.Host
+dotnet run
 
-# Override values at runtime
-dotnet run --project src/AxpoGroupChallenge.Reports.Host `
-  --ReportFileOptions:OutputDirectoryPath=C:\exports `
-  --ReportFileOptions:TimeZone="Central European Standard Time" `
-  --WorkerExecutionOptions:ExtractionIntervalMinutes=15 `
-  --RetryOptions:MaxRetryAttempts=5
+Note:
+<REPO_ROOT> represents the local directory where the repository has been cloned. This path will vary depending on your environment, so you must replace it with your actual local repository root path before executing the commands.
 ```
 
 ### Visual Studio 2022 / 2026
