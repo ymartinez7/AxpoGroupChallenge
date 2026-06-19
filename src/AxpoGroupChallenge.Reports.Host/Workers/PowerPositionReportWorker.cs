@@ -1,5 +1,6 @@
 using AxpoGroupChallenge.Reports.Application.UseCases.GeneratePowerPositionReport;
 using AxpoGroupChallenge.Reports.Host.Configurations;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -8,11 +9,11 @@ namespace AxpoGroupChallenge.Reports.Host.Workers;
 
 public sealed class PowerPositionReportWorker(
     ILogger<PowerPositionReportWorker> logger,
-    IGeneratePowerPositionReportUseCase useCase,
+    IServiceScopeFactory scopeFactory,
     IOptions<WorkerExecutionOptions> options) : BackgroundService
 {
     private readonly ILogger<PowerPositionReportWorker> _logger = logger;
-    private readonly IGeneratePowerPositionReportUseCase _useCase = useCase;
+    private readonly IServiceScopeFactory _scopeFactory = scopeFactory;
     private readonly TimeSpan _interval = TimeSpan.FromMinutes(options.Value.ExtractionIntervalMinutes);
     private readonly TimeSpan _gracefulShutdownTimeout = TimeSpan.FromSeconds(60);
     private readonly SemaphoreSlim _semaphore = new(1, 1);
@@ -66,7 +67,9 @@ public sealed class PowerPositionReportWorker(
         try
         {
             _logger.LogInformation("Extraction starting");
-            await _useCase.ExecuteAsync(cancellationToken);
+            await using var scope = _scopeFactory.CreateAsyncScope();
+            var useCase = scope.ServiceProvider.GetRequiredService<IGeneratePowerPositionReportUseCase>();
+            await useCase.ExecuteAsync(cancellationToken);
             _logger.LogInformation("Extraction complete");
         }
         catch (Exception ex)

@@ -10,12 +10,16 @@ using Serilog;
 var host = Host.CreateDefaultBuilder(args)
     .ConfigureServices((context, services) =>
     {
+        // Configurations
         services.Configure<WorkerExecutionOptions>(context.Configuration.GetSection("WorkerExecutionOptions"));
         services.Configure<ReportFileOptions>(context.Configuration.GetSection("ReportFileOptions"));
         services.Configure<RetryOptions>(context.Configuration.GetSection("RetryOptions"));
 
+        // Layers DI
         services.AddApplicationServices();
         services.AddInfrastructureServices();
+
+        // Workers
         services.AddHostedService<PowerPositionReportWorker>();
     })
     .UseSerilog((context, configuration) =>
