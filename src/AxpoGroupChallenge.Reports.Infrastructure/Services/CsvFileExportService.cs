@@ -1,5 +1,5 @@
-using AxpoGroupChallenge.Reports.Application.DTOs;
 using AxpoGroupChallenge.Reports.Application.Interfaces;
+using AxpoGroupChallenge.Reports.Application.UseCases.GeneratePowerPositionReport;
 using Microsoft.Extensions.Logging;
 using System.Globalization;
 
