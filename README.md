@@ -41,7 +41,7 @@ Worker service (.NET 10) that extracts intraday power trading positions from `Po
 | Filename `PowerPosition_YYYYMMDD_HHMM.csv` | Extraction timestamp in configurable local timezone |
 | Configurable output folder config file | `appsettings.json` and `appsettings.Development.json` |
 | Extraction every X minutes | `PeriodicTimer` — `WorkerExecutionOptions:ExtractionIntervalMinutes` |
-| Never miss a scheduled extraction | `SemaphoreSlim(1,1)` — overlapping extraction is skipped, not cancelled |
+| Never miss a scheduled extraction | `Channel<DateTimeOffset>` — every tick is enqueued and processed in order; no extraction is ever dropped |
 | First extraction on startup | `ExecuteAsync` calls `TryRunExtractionAsync` before the first tick |
 | Production-grade logging | Serilog — structured logging with environment-configurable level |
 | Resilience against PowerService failures | Polly retry with exponential backoff — configurable via `RetryOptions` |
@@ -92,6 +92,7 @@ The worker is registered as `Singleton` (`IHostedService`). Infrastructure servi
 | **Dependency Injection** | `IServiceCollection` wiring in `Program.cs` and `DependencyInjection.cs` | Decouples construction from usage; all dependencies are resolved by the container — enables Scrutor decorator registration and scope-per-extraction via `IServiceScopeFactory` |
 | **Retry** | `ResilientPowerServiceDecorator` via Polly `ResiliencePipeline` | Automatically retries `GetTrades()` up to `MaxRetryAttempts` times with exponential backoff on any exception — transparent to the use case |
 | **Builder** | `ResiliencePipelineBuilder<T>` in `ResilientPowerServiceDecorator.BuildPipeline()` | Constructs the Polly resilience pipeline step by step via a fluent API — separates pipeline configuration from its execution |
+| **Producer/Consumer** | `Channel<DateTimeOffset>` in `PowerPositionReportWorker` | Decouples tick scheduling from extraction execution — the producer enqueues every tick; the consumer processes them in order without dropping any |
 
 ---
 
@@ -156,19 +157,23 @@ The worker is registered as `Singleton` (`IHostedService`). Infrastructure servi
 
 ## 5. Execution Model
 
+Two concurrent loops run inside `ExecuteAsync`:
+
 ```
-Startup
-   │
-   ├─► Immediate extraction (t = 0)
-   │
-   ├─► Wait X minutes
-   │
-   ├─► Scheduled extraction (t = X)
-   │
-   ├─► Wait X minutes
-   │
-   └─► ... (runs indefinitely until Ctrl+C / stop signal)
+Producer (PeriodicTimer)              Channel<DateTimeOffset>         Consumer
+────────────────────────              ───────────────────────         ────────
+Startup → enqueue t=0        ──────► [ t=0 ]                ──────► extraction #1
+t=X     → enqueue t=X        ──────► [ t=X ]                         (may be running)
+t=2X    → enqueue t=2X       ──────► [ t=X | t=2X ]        ──────► extraction #2
+                                                             ──────► extraction #3
+                                      never drops a tick
 ```
+
+- The producer enqueues every tick immediately — it never waits for the consumer.
+- The consumer processes extractions one at a time, in order.
+- If an extraction takes longer than the interval, ticks accumulate in the queue and are processed as soon as the consumer is free — none are dropped.
+- A `LogWarning` is emitted if an extraction starts more than 1 minute after its scheduled tick.
+- On shutdown (`Ctrl+C` / stop signal): the producer stops, `Writer.Complete()` closes the queue, and the consumer drains any remaining items before the worker exits.
 
 ---
 
