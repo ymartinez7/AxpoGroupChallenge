@@ -48,7 +48,7 @@ namespace AxpoGroupChallenge.Reports.Infrastructure.Services
 
             // Period 1 = 23:00 (previous day)
             var vol1 = periodVolumes.TryGetValue(1, out var v1) ? v1 : 0;
-            csvLines.Add($"23:00,{vol1.ToString(CultureInfo.InvariantCulture)}");
+            csvLines.Add($"23:00,{vol1.ToString("F2", CultureInfo.InvariantCulture)}");
 
             // Periods 2-24 = 00:00 to 22:00
             for (int period = 2; period <= 24; period++)
@@ -57,7 +57,7 @@ namespace AxpoGroupChallenge.Reports.Infrastructure.Services
                 var volume = periodVolumes.TryGetValue(period, out var vol) ? vol : 0;
                 var timeStr = new DateTime(tradeDate.Year, tradeDate.Month, tradeDate.Day, hour, 0, 0)
                     .ToString("HH:mm", CultureInfo.InvariantCulture);
-                csvLines.Add($"{timeStr},{volume.ToString(CultureInfo.InvariantCulture)}");
+                csvLines.Add($"{timeStr},{volume.ToString("F2", CultureInfo.InvariantCulture)}");
             }
 
             return csvLines;
