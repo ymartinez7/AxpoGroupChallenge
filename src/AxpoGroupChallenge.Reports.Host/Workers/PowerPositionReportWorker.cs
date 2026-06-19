@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Threading.Channels;
 
 namespace AxpoGroupChallenge.Reports.Host.Workers;
 
@@ -15,55 +16,44 @@ public sealed class PowerPositionReportWorker(
     private readonly ILogger<PowerPositionReportWorker> _logger = logger;
     private readonly IServiceScopeFactory _scopeFactory = scopeFactory;
     private readonly TimeSpan _interval = TimeSpan.FromMinutes(options.Value.ExtractionIntervalMinutes);
-    private readonly TimeSpan _gracefulShutdownTimeout = TimeSpan.FromSeconds(60);
-    private readonly SemaphoreSlim _semaphore = new(1, 1);
-    private PeriodicTimer? _timer;
+    private readonly TimeSpan _lateThreshold = TimeSpan.FromMinutes(1);
+
+    private readonly Channel<DateTimeOffset> _queue = Channel.CreateUnbounded<DateTimeOffset>(
+        new UnboundedChannelOptions { SingleReader = true, SingleWriter = true });
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _logger.LogInformation("Power position report worker started");
-        _timer = new PeriodicTimer(_interval);
 
-        await TryRunExtractionAsync(stoppingToken);
+        var consumer = ConsumeQueueAsync(stoppingToken);
 
-        while (await _timer.WaitForNextTickAsync(stoppingToken))
-            await TryRunExtractionAsync(stoppingToken);
+        _queue.Writer.TryWrite(DateTimeOffset.UtcNow);
+
+        using var timer = new PeriodicTimer(_interval);
+        while (await timer.WaitForNextTickAsync(stoppingToken))
+            _queue.Writer.TryWrite(DateTimeOffset.UtcNow);
+
+        _queue.Writer.Complete();
+        await consumer;
 
         _logger.LogInformation("Periodic execution loop completed");
     }
 
-    public override async Task StopAsync(CancellationToken cancellationToken)
+    private async Task ConsumeQueueAsync(CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Worker stopping");
+        await foreach (var scheduledAt in _queue.Reader.ReadAllAsync(cancellationToken))
+        {
+            var delay = DateTimeOffset.UtcNow - scheduledAt;
+            if (delay > _lateThreshold)
+                _logger.LogWarning("Extraction running {DelaySeconds}s late (tolerance: {ToleranceSeconds}s)",
+                    (int)delay.TotalSeconds, (int)_lateThreshold.TotalSeconds);
 
-        _timer?.Dispose();
-
-        try
-        {
-            using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            cts.CancelAfter(_gracefulShutdownTimeout);
-            await _semaphore.WaitAsync(cts.Token);
-        }
-        catch (OperationCanceledException)
-        {
-            _logger.LogWarning("Graceful shutdown timeout after {TimeoutSeconds}s", _gracefulShutdownTimeout.TotalSeconds);
-        }
-        finally
-        {
-            _semaphore.Dispose();
-            _logger.LogInformation("Worker stopped");
-            await base.StopAsync(cancellationToken);
+            await RunExtractionAsync(cancellationToken);
         }
     }
 
-    private async Task TryRunExtractionAsync(CancellationToken cancellationToken)
+    private async Task RunExtractionAsync(CancellationToken cancellationToken)
     {
-        if (!_semaphore.Wait(0))
-        {
-            _logger.LogWarning("Extraction skipped; previous extraction still running");
-            return;
-        }
-
         try
         {
             _logger.LogInformation("Extraction starting");
@@ -72,13 +62,13 @@ public sealed class PowerPositionReportWorker(
             await useCase.ExecuteAsync(cancellationToken);
             _logger.LogInformation("Extraction complete");
         }
+        catch (OperationCanceledException)
+        {
+            _logger.LogInformation("Extraction cancelled");
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Extraction failed: {Message}", ex.Message);
-        }
-        finally
-        {
-            _semaphore.Release();
         }
     }
 }

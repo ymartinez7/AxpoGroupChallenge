@@ -27,6 +27,7 @@ public sealed class PowerPositionReportWorkerTests : IDisposable
         var found = await WaitForCsvFileAsync(_outputDir, TimeSpan.FromSeconds(10));
         await host.StopAsync();
 
+        Assert.True(found, "No CSV file was generated within the time limit");
         Assert.Single(Directory.GetFiles(_outputDir, "*.csv"));
 
         var file = Directory.GetFiles(_outputDir, "*.csv").Single();
