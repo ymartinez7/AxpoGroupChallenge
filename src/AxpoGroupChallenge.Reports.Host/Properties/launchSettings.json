@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "AxpoGroupChallenge.Reports.Host": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}

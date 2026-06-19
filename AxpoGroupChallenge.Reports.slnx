@@ -1,12 +1,13 @@
 <Solution>
-  <Folder Name="/Solution Items/">
-    <File Path=".gitignore" />
-  </Folder>
   <Folder Name="/src/">
     <Project Path="src/AxpoGroupChallenge.Reports.Application/AxpoGroupChallenge.Reports.Application.csproj" />
     <Project Path="src/AxpoGroupChallenge.Reports.Domain/AxpoGroupChallenge.Reports.Domain.csproj" />
     <Project Path="src/AxpoGroupChallenge.Reports.Host/AxpoGroupChallenge.Reports.Host.csproj" />
     <Project Path="src/AxpoGroupChallenge.Reports.Infrastructure/AxpoGroupChallenge.Reports.Infrastructure.csproj" />
   </Folder>
-  <Folder Name="/tests/" />
+  <Folder Name="/tests/">
+    <Project Path="tests/AxpoGroupChallenge.Reports.Host.IntegrationTests/AxpoGroupChallenge.Reports.Host.IntegrationTests.csproj" Id="59397375-06eb-4fb0-b5db-847c5b73853f" />
+    <Project Path="tests/AxpoGroupChallenge.Reports.Infrastructure.UnitTests/AxpoGroupChallenge.Reports.Infrastructure.UnitTests.csproj" Id="56182952-f60c-4e99-871e-08a466101c6c" />
+    <Project Path="tests/AxpoGroupChallenge.Reports.Tests/AxpoGroupChallenge.Reports.Application.UnitTests/AxpoGroupChallenge.Reports.Application.UnitTests.csproj" Id="2898b355-086e-4b29-ba94-d0d29b8529b3" />
+  </Folder>
 </Solution>
