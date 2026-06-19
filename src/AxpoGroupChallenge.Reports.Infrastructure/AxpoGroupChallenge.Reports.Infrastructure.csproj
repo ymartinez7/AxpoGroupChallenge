@@ -15,7 +15,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\AxpoGroupChallenge.Reports.Application\AxpoGroupChallenge.Reports.Application.csproj" />
-    <ProjectReference Include="..\AxpoGroupChallenge.Reports.Domain\AxpoGroupChallenge.Reports.Domain.csproj" />
   </ItemGroup>
 
   <ItemGroup>
