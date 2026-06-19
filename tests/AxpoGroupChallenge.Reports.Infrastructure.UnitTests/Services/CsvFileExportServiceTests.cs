@@ -1,4 +1,4 @@
-using AxpoGroupChallenge.Reports.Application.UseCases.GeneratePowerPositionReport;
+using AxpoGroupChallenge.Reports.Application.DTOs;
 using AxpoGroupChallenge.Reports.Infrastructure.Services;
 using Microsoft.Extensions.Logging.Abstractions;
 

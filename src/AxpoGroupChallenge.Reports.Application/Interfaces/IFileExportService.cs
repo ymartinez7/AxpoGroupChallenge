@@ -1,4 +1,4 @@
-using AxpoGroupChallenge.Reports.Application.UseCases.GeneratePowerPositionReport;
+using AxpoGroupChallenge.Reports.Application.DTOs;
 
 namespace AxpoGroupChallenge.Reports.Application.Interfaces
 {

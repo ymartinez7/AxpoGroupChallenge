@@ -38,6 +38,27 @@ dotnet run --project src/AxpoGroupChallenge.Reports.Host \
   --WorkerExecutionOptions:ExtractionIntervalMinutes=15
 ```
 
+### Development environment
+
+To activate `appsettings.Development.json` (interval = 5 min, output = `C:\PowerPositionReports`), set the `DOTNET_ENVIRONMENT` variable before running:
+
+**PowerShell**
+```powershell
+$env:DOTNET_ENVIRONMENT = "Development"
+dotnet run --project src/AxpoGroupChallenge.Reports.Host
+```
+
+**Command Prompt**
+```cmd
+set DOTNET_ENVIRONMENT=Development
+dotnet run --project src/AxpoGroupChallenge.Reports.Host
+```
+
+**Inline (PowerShell)**
+```powershell
+$env:DOTNET_ENVIRONMENT="Development"; dotnet run --project src/AxpoGroupChallenge.Reports.Host
+```
+
 ## CSV format
 
 ```

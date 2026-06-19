@@ -1,4 +1,4 @@
-namespace AxpoGroupChallenge.Reports.Application.UseCases.GeneratePowerPositionReport
+namespace AxpoGroupChallenge.Reports.Application.DTOs
 {
     public sealed record FileExportRequest(
         IReadOnlyDictionary<int, decimal> Trades,

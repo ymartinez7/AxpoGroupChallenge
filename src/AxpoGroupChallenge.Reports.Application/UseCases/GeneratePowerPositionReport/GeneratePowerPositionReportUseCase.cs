@@ -1,5 +1,6 @@
 using Axpo;
 using AxpoGroupChallenge.Reports.Application.Configurations;
+using AxpoGroupChallenge.Reports.Application.DTOs;
 using AxpoGroupChallenge.Reports.Application.Interfaces;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
