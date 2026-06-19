@@ -39,7 +39,7 @@ Worker service (.NET 10) that extracts intraday power trading positions from `Po
 | Aggregate per local hour (Europe/London) | `PowerTradeAgregatorService` — Period 1 → 23:00 previous day |
 | CSV: header + 24 rows, `HH:MM` format | `CsvFileExportService` — `Local Time,Volume` |
 | Filename `PowerPosition_YYYYMMDD_HHMM.csv` | Extraction timestamp in configurable local timezone |
-| Configurable output folder (CLI or config file) | `ReportFileOptions:OutputDirectoryPath` |
+| Configurable output folder config file | `appsettings.json` and `appsettings.Development.json` |
 | Extraction every X minutes | `PeriodicTimer` — `WorkerExecutionOptions:ExtractionIntervalMinutes` |
 | Never miss a scheduled extraction | `SemaphoreSlim(1,1)` — overlapping extraction is skipped, not cancelled |
 | First extraction on startup | `ExecuteAsync` calls `TryRunExtractionAsync` before the first tick |
@@ -57,14 +57,12 @@ Clean Architecture in three layers — no Domain layer:
 ```
        Host              ← BackgroundService worker, DI wiring, Serilog, appsettings
         ↓
-    Application          ← interfaces, use cases, aggregation service, DTOs, configuration records
+    Application          ← interfaces, use cases, aggregation service, configuration records
         ↓
   Infrastructure         ← implementations: CSV export, system clock, PowerService, retry decorator
         ↓
 PowerService.dll (external — libs/)
 ```
-
-**Dependency rule:** `Application` has no reference to `Infrastructure`. The `Host` references both and performs DI wiring.
 
 ### Extraction Flow
 
@@ -78,10 +76,6 @@ PowerPositionReportWorker
               └── IFileExportService          → write CSV to disk
 ```
 
-### Concurrency
-
-`PeriodicTimer` + `SemaphoreSlim(1,1)`: if an extraction takes longer than the interval, the next tick is skipped with a warning log. `StopAsync` waits up to 60 seconds for any active extraction to finish before shutting down.
-
 ### Scope per Extraction
 
 The worker is registered as `Singleton` (`IHostedService`). Infrastructure services are `Scoped`. The worker resolves the use case through `IServiceScopeFactory` — creating and disposing a DI scope on every extraction tick.
@@ -93,41 +87,47 @@ The worker is registered as `Singleton` (`IHostedService`). Infrastructure servi
 | Pattern | Where | Purpose |
 |---|---|---|
 | **Decorator** | `ResilientPowerServiceDecorator` wraps `IPowerService` | Adds Polly retry to `GetTrades()` without modifying the use case or the original service |
-| **Interface Abstraction** | `IPowerService` defined in `Application` | Decouples the application from the external DLL; enables mocking in tests without touching `PowerService.dll` |
 | **Options** | `IOptions<T>` for `ReportFileOptions`, `WorkerExecutionOptions`, `RetryOptions` | Strongly-typed configuration bound from `appsettings.json` or CLI |
 | **Strategy** | `IFileExportService`, `IClockService` | Swappable implementations — CSV format or clock source can be replaced without touching the use case |
-| **Template Method** | `BackgroundService` (`ExecuteAsync`) | Framework-provided base class; the worker implements only the scheduling loop |
 | **Dependency Injection** | `IServiceCollection` wiring in `Program.cs` and `DependencyInjection.cs` | Decouples construction from usage; all dependencies are resolved by the container — enables Scrutor decorator registration and scope-per-extraction via `IServiceScopeFactory` |
 | **Retry** | `ResilientPowerServiceDecorator` via Polly `ResiliencePipeline` | Automatically retries `GetTrades()` up to `MaxRetryAttempts` times with exponential backoff on any exception — transparent to the use case |
 | **Builder** | `ResiliencePipelineBuilder<T>` in `ResilientPowerServiceDecorator.BuildPipeline()` | Constructs the Polly resilience pipeline step by step via a fluent API — separates pipeline configuration from its execution |
-| **Factory Method** | `IServiceScopeFactory.CreateAsyncScope()` in `PowerPositionReportWorker` | Delegates scope creation to the container — the worker never instantiates dependencies directly, only requests them from the factory |
 
 ---
 
 ## 4. Configuration
 
-All values can be overridden at runtime via CLI using `--Section:Key=value`.
-
 ### Reference `appsettings.json`
 
 ```json
 {
+  "Serilog": {
+    "MinimumLevel": "Error",
+    "WriteTo": [
+      {
+        "Name": "Console"
+      }
+    ],
+    "Enrich": [
+      "FromLogContext",
+      "WithMachineName",
+      "WithThreadId"
+    ]
+  },
   "WorkerExecutionOptions": {
-    "ExtractionIntervalMinutes": 10
+    "ExtractionIntervalMinutes": 5
   },
   "RetryOptions": {
     "MaxRetryAttempts": 3,
-    "BaseDelay": "00:00:01"
+    "BaseDelay": "00:00:05"
   },
   "ReportFileOptions": {
     "OutputDirectoryPath": "C:\\PowerPositionReports",
     "TimeZone": "GMT Standard Time",
     "FileNameFormat": "PowerPosition_{0:yyyyMMdd}_{1:HHmm}.csv"
-  },
-  "Serilog": {
-    "MinimumLevel": "Error"
   }
 }
+
 ```
 
 ### All Configuration Keys
