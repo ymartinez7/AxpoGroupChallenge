@@ -12,7 +12,6 @@
 2. [Architecture](#2-architecture)
    - [Layers](#layers)
    - [Extraction Flow](#extraction-flow)
-   - [Concurrency](#concurrency)
    - [Scope per Extraction](#scope-per-extraction)
 3. [Design Patterns](#3-design-patterns)
 4. [Configuration](#4-configuration)
@@ -42,7 +41,7 @@ Worker service (.NET 10) that extracts intraday power trading positions from `Po
 | Configurable output folder config file | `appsettings.json` and `appsettings.Development.json` |
 | Extraction every X minutes | `PeriodicTimer` — `WorkerExecutionOptions:ExtractionIntervalMinutes` |
 | Never miss a scheduled extraction | `Channel<DateTimeOffset>` — every tick is enqueued and processed in order; no extraction is ever dropped |
-| First extraction on startup | `ExecuteAsync` calls `TryRunExtractionAsync` before the first tick |
+| First extraction on startup | `ExecuteAsync` enqueues the first tick immediately via `_queue.Writer.TryWrite` before the `PeriodicTimer` starts |
 | Production-grade logging | Serilog — structured logging with environment-configurable level |
 | Resilience against PowerService failures | Polly retry with exponential backoff — configurable via `RetryOptions` |
 
