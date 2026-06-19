@@ -12,6 +12,7 @@ var host = Host.CreateDefaultBuilder(args)
     {
         services.Configure<WorkerExecutionOptions>(context.Configuration.GetSection("WorkerExecutionOptions"));
         services.Configure<ReportFileOptions>(context.Configuration.GetSection("ReportFileOptions"));
+        services.Configure<RetryOptions>(context.Configuration.GetSection("RetryOptions"));
 
         services.AddApplicationServices();
         services.AddInfrastructureServices();
