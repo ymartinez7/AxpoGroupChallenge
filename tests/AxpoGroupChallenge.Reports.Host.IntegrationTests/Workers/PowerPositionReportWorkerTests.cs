@@ -1,48 +1,33 @@
-using Axpo;
 using AxpoGroupChallenge.Reports.Application;
 using AxpoGroupChallenge.Reports.Application.Configurations;
-using AxpoGroupChallenge.Reports.Application.UseCases.GeneratePowerPositionReport;
+using AxpoGroupChallenge.Reports.Host.Configurations;
+using AxpoGroupChallenge.Reports.Host.Workers;
 using AxpoGroupChallenge.Reports.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
-using Moq;
 
 namespace AxpoGroupChallenge.Reports.Host.IntegrationTests.Workers;
 
 public sealed class PowerPositionReportWorkerTests : IDisposable
 {
     private readonly string _outputDir;
-    private readonly Mock<IPowerService> _powerService;
 
     public PowerPositionReportWorkerTests()
     {
-        _powerService = new();
         _outputDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-
-        var trade = PowerTrade.Create(DateTime.Today, 24);
-        _powerService.Setup(x => x.GetTrades(It.IsAny<DateTime>())).Returns([trade]);
     }
 
     [Fact]
-    public async Task UseCase_RunsEnd2End_GeneratesCsvFile()
+    public async Task Worker_RunsEnd2End_GeneratesCsvFile()
     {
         using var host = BuildHost();
-        var useCase = host.Services.GetRequiredService<IGeneratePowerPositionReportUseCase>();
+        await host.StartAsync();
 
-        await useCase.ExecuteAsync(CancellationToken.None);
+        var found = await WaitForCsvFileAsync(_outputDir, TimeSpan.FromSeconds(10));
+        await host.StopAsync();
 
-        var files = Directory.GetFiles(_outputDir, "*.csv");
-        Assert.Single(files);
-    }
-
-    [Fact]
-    public async Task UseCase_GeneratedCsv_HasHeaderAnd24DataRows()
-    {
-        using var host = BuildHost();
-        var useCase = host.Services.GetRequiredService<IGeneratePowerPositionReportUseCase>();
-
-        await useCase.ExecuteAsync(CancellationToken.None);
+        Assert.Single(Directory.GetFiles(_outputDir, "*.csv"));
 
         var file = Directory.GetFiles(_outputDir, "*.csv").Single();
         var lines = await File.ReadAllLinesAsync(file);
@@ -74,21 +59,39 @@ public sealed class PowerPositionReportWorkerTests : IDisposable
     {
         Directory.CreateDirectory(_outputDir);
 
-        var options = Options.Create(new ReportFileOptions
+        var reportOptions = Options.Create(new ReportFileOptions
         {
             OutputDirectoryPath = _outputDir,
             TimeZone = "GMT Standard Time",
             FileNameFormat = "PowerPosition_{0}_{1}.csv"
         });
 
+        var workerOptions = Options.Create(new WorkerExecutionOptions
+        {
+            ExtractionIntervalMinutes = 60
+        });
+
         return Microsoft.Extensions.Hosting.Host.CreateDefaultBuilder()
             .ConfigureServices(services =>
             {
-                services.AddSingleton(options);
+                services.AddSingleton(reportOptions);
+                services.AddSingleton(workerOptions);
                 services.AddApplicationServices();
                 services.AddInfrastructureServices();
-                services.AddSingleton<IPowerService>(_powerService.Object);
+                services.AddHostedService<PowerPositionReportWorker>();
             })
             .Build();
+    }
+
+    private static async Task<bool> WaitForCsvFileAsync(string dir, TimeSpan timeout)
+    {
+        var deadline = DateTime.UtcNow + timeout;
+        while (DateTime.UtcNow < deadline)
+        {
+            if (Directory.GetFiles(dir, "*.csv").Length > 0)
+                return true;
+            await Task.Delay(200);
+        }
+        return false;
     }
 }

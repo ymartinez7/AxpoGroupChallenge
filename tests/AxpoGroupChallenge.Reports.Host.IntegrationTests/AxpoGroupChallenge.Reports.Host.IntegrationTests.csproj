@@ -20,6 +20,7 @@
   <ItemGroup>
     <ProjectReference Include="../../src/AxpoGroupChallenge.Reports.Application/AxpoGroupChallenge.Reports.Application.csproj" />
     <ProjectReference Include="../../src/AxpoGroupChallenge.Reports.Infrastructure/AxpoGroupChallenge.Reports.Infrastructure.csproj" />
+    <ProjectReference Include="../../src/AxpoGroupChallenge.Reports.Host/AxpoGroupChallenge.Reports.Host.csproj" />
   </ItemGroup>
 
   <ItemGroup>

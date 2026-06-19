@@ -247,13 +247,8 @@ Local Time,Volume
 
 ## 8. Tests
 
-```bash
-dotnet test                                                     # all tests
-dotnet test --filter "FullyQualifiedName~AggregatePeriods"     # by name
-```
-
 | Project | Covers |
 |---|---|
 | `Application.UnitTests` | `PowerTradeAgregatorService`, `GeneratePowerPositionReportUseCase` |
 | `Infrastructure.UnitTests` | `CsvFileExportService`, `ResilientPowerServiceDecorator` |
-| `Host.IntegrationTests` | End-to-end flow with real DI and mocked `IPowerService` |
+| `Host.IntegrationTests` | End-to-end flow with real DI |
