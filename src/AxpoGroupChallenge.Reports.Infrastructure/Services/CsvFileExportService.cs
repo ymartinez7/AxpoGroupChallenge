@@ -64,10 +64,6 @@ namespace AxpoGroupChallenge.Reports.Infrastructure.Services
         }
 
         private static string GenerateFileName(DateTime tradeDate, DateTime extractionTime, string fileNameFormat)
-        {
-            var dateStr = tradeDate.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
-            var timeStr = extractionTime.ToString("HHmm", CultureInfo.InvariantCulture);
-            return string.Format(fileNameFormat, dateStr, timeStr);
-        }
+            => string.Format(CultureInfo.InvariantCulture, fileNameFormat, tradeDate, extractionTime);
     }
 }

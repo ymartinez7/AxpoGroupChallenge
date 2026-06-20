@@ -64,7 +64,7 @@ public sealed class PowerPositionReportWorkerTests : IDisposable
         {
             OutputDirectoryPath = _outputDir,
             TimeZone = "GMT Standard Time",
-            FileNameFormat = "PowerPosition_{0}_{1}.csv"
+            FileNameFormat = "PowerPosition_{0:yyyyMMdd}_{1:HHmm}.csv"
         });
 
         var workerOptions = Options.Create(new WorkerExecutionOptions

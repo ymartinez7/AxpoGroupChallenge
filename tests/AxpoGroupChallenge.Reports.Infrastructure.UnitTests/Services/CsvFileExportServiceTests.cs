@@ -96,7 +96,7 @@ public sealed class CsvFileExportServiceTests : IDisposable
             TradeDate: tradeDate ?? new DateTime(2024, 6, 1),
             ExtractionTime: extractionTime ?? new DateTime(2024, 6, 1, 14, 30, 0),
             OutputDirectoryPath: outputDir ?? _outputDir,
-            FileNameFormat: "PowerPosition_{0}_{1}.csv",
+            FileNameFormat: "PowerPosition_{0:yyyyMMdd}_{1:HHmm}.csv",
             TimeZone: "GMT Standard Time");
     }
 
